@@ -4,35 +4,27 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report, accuracy_score
 
-# Load the dataset from a CSV file
-file_path = r"E:\TYBSC CS\TCS INTERSHIP\reviews.csv"  # Replace with your actual CSV file path
-try:
-    dataset = pd.read_csv(file_path)
-    print("Dataset loaded successfully.")
-except Exception as e:
-    print(f"Error loading dataset: {e}")
-    exit()
+# Load the preprocessed dataset with emotion labels
+file_path = r"E:\TYBSC CS\TCS INTERSHIP\preprocessed_emotions.csv"  # Updated to preprocessed file path
+dataset = pd.read_csv(file_path)
 
 # Strip leading and trailing whitespace from column names
 dataset.columns = dataset.columns.str.strip()
 
-# Ensure that the 'Review' and 'Rating' columns exist in the dataset
-if 'Review' not in dataset.columns or 'Rating' not in dataset.columns:
-    raise ValueError("Dataset must contain 'Review' and 'Rating' columns.")
-
-# Preprocessing and cleaning data (if needed)
-# You can add your text preprocessing here if necessary
+# Ensure that the 'Review' and 'Emotion_Label' columns exist in the dataset
+if 'Review' not in dataset.columns or 'Emotion_Label' not in dataset.columns:
+    raise ValueError("Dataset must contain 'Review' and 'Emotion_Label' columns.")
 
 # Split data into training and test sets
-X_train, X_test, y_train, y_test = train_test_split(dataset['Review'], dataset['Rating'], test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(dataset['Review'], dataset['Emotion_Label'], test_size=0.2, random_state=42)
 
-# Define a pipeline for text feature extraction and modeling
+# Define a pipeline for text feature extraction and emotion classification
 text_pipeline = Pipeline([
     ('vectorizer', CountVectorizer(ngram_range=(1, 2))),  # Include both unigrams and bigrams
-    ('regressor', LinearRegression())
+    ('classifier', MultinomialNB())  # Using Naive Bayes for classification
 ])
 
 # Train the model
@@ -40,15 +32,17 @@ text_pipeline.fit(X_train, y_train)
 
 # Evaluate the model
 y_pred = text_pipeline.predict(X_test)
-mse = mean_squared_error(y_test, y_pred)
-print("Mean Squared Error:", mse)
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy Score:", accuracy)
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
 
-# Plot histogram of Ratings
+# Plot histogram of Emotion Labels
 sns.set_style("whitegrid")
 plt.figure(figsize=(10, 6))
-sns.histplot(dataset['Rating'], bins=10, kde=True, color='skyblue')
-plt.title('Distribution of Ratings', fontsize=16)
-plt.xlabel('Rating', fontsize=14)
+sns.histplot(dataset['Emotion_Label'], bins=len(dataset['Emotion_Label'].unique()), kde=False, color='skyblue')
+plt.title('Distribution of Emotion Labels', fontsize=16)
+plt.xlabel('Emotion Label', fontsize=14)
 plt.ylabel('Frequency', fontsize=14)
 plt.xticks(fontsize=12)
 plt.yticks(fontsize=12)

@@ -1,10 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-from textblob import TextBlob
+import re
 
 # Load the dataset from a CSV file
-file_path = r"E:\TYBSC CS\TCS INTERSHIP\reviews.csv"  # Replace with your actual CSV file path
+file_path = r"E:\TYBSC CS\TCS INTERSHIP\preprocessed_emotions.csv"  # Replace with your actual CSV file path
 try:
     dataset = pd.read_csv(file_path)
     print("Dataset loaded successfully.")
@@ -15,37 +15,43 @@ except Exception as e:
 # Strip leading and trailing whitespace from column names
 dataset.columns = dataset.columns.str.strip()
 
-# Ensure that the 'Review' and 'Rating' columns exist in the dataset
-if 'Review' not in dataset.columns or 'Rating' not in dataset.columns:
-    raise ValueError("Dataset must contain 'Review' and 'Rating' columns.")
+# Ensure that the 'Review' and 'Emotion_Label' columns exist in the dataset
+required_columns = ['Review', 'Emotion_Label']
+missing_columns = [col for col in required_columns if col not in dataset.columns]
 
-# Sentiment analysis implementation
-def perform_sentiment_analysis(text):
-    analysis = TextBlob(str(text))
-    polarity = analysis.sentiment.polarity
-    if polarity > 0:
-        sentiment_label = "Positive"
-    elif polarity == 0:
-        sentiment_label = "Neutral"
-    else:
-        sentiment_label = "Negative"
-    return sentiment_label
+if missing_columns:
+    raise ValueError(f"Dataset must contain the following columns: {', '.join(missing_columns)}")
 
-# Apply sentiment analysis
-dataset['Sentiment_Label'] = dataset['Review'].apply(perform_sentiment_analysis)
+# Function to clean text data
+def clean_text(text):
+    text = str(text).lower()
+    text = re.sub(r'\d+', '', text)  # Remove numbers
+    text = re.sub(r'\s+', ' ', text)  # Remove extra whitespace
+    text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
+    return text
 
-# Filter dataset for positive sentiment reviews
-positive_reviews = dataset[dataset['Sentiment_Label'] == 'Positive']
+# Apply text cleaning
+dataset['Cleaned_Review'] = dataset['Review'].apply(clean_text)
 
-# Concatenate all positive sentiment reviews into a single string
-positive_text = ' '.join(positive_reviews['Review'])
+# Print sample data for verification
+print("Sample cleaned reviews:")
+print(dataset[['Review', 'Cleaned_Review']].head())
 
-# Generate word cloud
-wordcloud = WordCloud(width=800, height=400, background_color='white', stopwords=None).generate(positive_text)
+# Check the unique emotions in the dataset
+emotions = dataset['Emotion_Label'].unique()
+print("Unique emotions:", emotions)
 
-# Display the word cloud
-plt.figure(figsize=(10, 8))
-plt.imshow(wordcloud, interpolation='bilinear')
-plt.title('Word Cloud of Positive Sentiments')
-plt.axis('off')
-plt.show()
+# Generate and display word clouds for each emotion
+for emotion in emotions:
+    emotion_reviews = dataset[dataset['Emotion_Label'] == emotion]
+    emotion_text = ' '.join(emotion_reviews['Cleaned_Review'])
+    
+    # Generate word cloud
+    wordcloud = WordCloud(width=800, height=400, background_color='white', stopwords=None).generate(emotion_text)
+    
+    # Display the word cloud
+    plt.figure(figsize=(10, 8))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.title(f'Word Cloud of {emotion} Reviews')
+    plt.axis('off')
+    plt.show()

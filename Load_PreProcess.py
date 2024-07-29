@@ -15,6 +15,8 @@ nltk.download('averaged_perceptron_tagger')
 
 # Dataset loading
 file_path = r"E:\TYBSC CS\TCS INTERSHIP\reviews.csv"
+output_file_path = r"E:\TYBSC CS\TCS INTERSHIP\preprocessed_reviews.csv"  # Path for the output CSV
+
 try:
     df = pd.read_csv(file_path)
     print("Dataset loaded successfully.")
@@ -87,4 +89,13 @@ df['Rating'] = pd.to_numeric(df['Rating'], errors='coerce')
 # Drop rows with missing values in 'Sentiment_Polarity' or 'Rating'
 df.dropna(subset=['Sentiment_Polarity', 'Rating'], inplace=True)
 print("Data cleaning completed.")
+
+# Save the preprocessed data to a new CSV file
+try:
+    df.to_csv(output_file_path, index=False)
+    print(f"Preprocessed data saved to {output_file_path}.")
+except Exception as e:
+    print(f"Error saving preprocessed data: {e}")
+
+# Print the first few rows of the processed dataset to verify
 print(df.head())
